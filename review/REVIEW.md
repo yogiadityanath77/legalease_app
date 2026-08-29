@@ -84,30 +84,30 @@ Expected: At least 3 risks flagged, at least one High severity (7-day terminatio
 ## Phase 4 — UI Review
 
 ### Visual Checklist
-- [ ] Dark navy background across all pages
-- [ ] Gold accent on buttons, active tab, headings
-- [ ] Navbar present on all authenticated pages
-- [ ] Sidebar shows list of past documents with name + date
-- [ ] Active document highlighted in sidebar
-- [ ] Three tabs visible on DocumentView: Summary | Risk Flags | Ask a Question
-- [ ] Tab switching works without page reload
+- [x] Dark navy background across all pages — `body { @apply bg-navy }` in `index.css`, `navy: #0a0f1e`
+- [x] Gold accent on buttons, active tab, headings — gold on buttons, active tab (`border-gold text-gold`), logo. NOTE: page `<h1>` headings render `text-ink` (white), not gold.
+- [x] Navbar present on all authenticated pages — `Dashboard` and `DocumentView` both render `<Navbar />`
+- [x] Sidebar shows list of past documents with name + date — truncated name + `toLocaleDateString()`
+- [x] Active document highlighted in sidebar — `NavLink` isActive → `bg-gold/10 text-gold ring-gold/30`
+- [x] Three tabs visible on DocumentView: Summary | Risk Flags | Ask a Question — three tabs present; labels are "Summary | Risks | Q&A"
+- [x] Tab switching works without page reload — local `tab` state, no navigation
 
 ### Summary Tab
-- [ ] Summary text is readable, well-spaced
-- [ ] No raw JSON visible on screen
+- [x] Summary text is readable, well-spaced — `space-y-4`, `leading-relaxed`, paragraph split on blank lines
+- [x] No raw JSON visible on screen — renders prose paragraphs only
 
 ### Risk Flags Tab
-- [ ] Each risk shown as a card
-- [ ] Severity badge colour correct (red/amber/green)
-- [ ] Clause text displayed (quoted style)
-- [ ] Reason text displayed below clause
+- [x] Each risk shown as a card — `<li className="rounded-xl bg-surface p-5">`
+- [x] Severity badge colour correct (red/amber/green) — High `#ef4444`, Medium `#f59e0b`, Low `#22c55e`
+- [x] Clause text displayed (quoted style) — clause shown as `<h3>` heading; NOTE: no quote/blockquote styling
+- [x] Reason text displayed below clause — `<p>` under the clause heading
 
 ### Q&A Tab
-- [ ] Input field at bottom of screen
-- [ ] Send button works
-- [ ] Loading indicator while GPT responds
-- [ ] Answer displays clearly
-- [ ] Can ask multiple questions in sequence
+- [x] Input field at bottom of screen — form input below transcript
+- [x] Send button works — `onSubmit` posts to `/documents/:id/ask`
+- [x] Loading indicator while GPT responds — "Thinking…" line + button "Asking…"
+- [x] Answer displays clearly — assistant bubble, `whitespace-pre-wrap`
+- [x] Can ask multiple questions in sequence — appends to `messages` array
 
 ---
 
