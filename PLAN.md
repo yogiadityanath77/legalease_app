@@ -82,15 +82,15 @@ Build in 5 phases, in order. Do not jump ahead. Each phase should be tested befo
 **Goal:** Full professional UI with all tabs working.
 
 ### Frontend
-- [ ] Build `Navbar.jsx` — logo left, logout right
-- [ ] Build `Sidebar.jsx` — list documents from GET `/api/documents`
-- [ ] Build `Dashboard.jsx` — sidebar + upload area
-- [ ] Build `DocumentView.jsx` — fetch document by ID, render tabs
-- [ ] Build `SummaryTab.jsx` — render summary text
-- [ ] Build `RiskTab.jsx` — render risk cards with severity badges
-- [ ] Build `QATab.jsx` — chat input, send question, display answer
-- [ ] Apply full navy/gold theme via Tailwind
-- [ ] Test all tabs end to end with a real document
+- [x] Build `Navbar.jsx` — logo left, logout right
+- [x] Build `Sidebar.jsx` — list documents from GET `/api/documents`
+- [x] Build `Dashboard.jsx` — sidebar + upload area
+- [x] Build `DocumentView.jsx` — fetch document by ID, render tabs (plus a "Run analysis" retry for `analysisStatus: 'failed'`)
+- [x] Build `SummaryTab.jsx` — render summary text
+- [x] Build `RiskTab.jsx` — render risk cards with severity badges (sorted High → Low, with per-severity counts)
+- [x] Build `QATab.jsx` — chat input, send question, display answer
+- [x] Apply full navy/gold theme via Tailwind
+- [x] Test all tabs end to end with a real document (live backend: upload → analysis complete with 5 risks, list/detail/ask all verified; build passes, dev server boots clean)
 
 ---
 
