@@ -7,7 +7,7 @@ const TABS = [
   { key: 'text', label: 'Paste Text' },
 ];
 
-export default function UploadModal({ open, onClose }) {
+export default function UploadModal({ open, onClose, onUploaded }) {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -75,6 +75,9 @@ export default function UploadModal({ open, onClose }) {
       const { data } = await api.post('/documents/upload', formData);
       reset();
       onClose();
+      // Let the owner refresh its document list. Needed when we navigate
+      // between two /document/:id routes, where the sidebar stays mounted.
+      onUploaded?.();
       navigate(`/document/${data.documentId}`);
     } catch (err) {
       setError(err.message);

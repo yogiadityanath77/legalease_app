@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import api from '../utils/axios';
+import UploadModal from './UploadModal';
 
 const STATUS_LABEL = {
   pending: 'Analysing…',
   failed: 'Analysis failed',
 };
 
-// Document history for the logged-in user. `refreshKey` lets a parent force a
-// re-fetch (e.g. right after an upload).
-export default function Sidebar({ refreshKey = 0 }) {
+// Document history for the logged-in user, plus the entry point for adding a
+// new one. The sidebar renders on every signed-in page, so owning the upload
+// modal here makes "add document" reachable from anywhere — and lets the list
+// refresh itself once the upload lands.
+export default function Sidebar() {
   const [docs, setDocs] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -31,14 +36,23 @@ export default function Sidebar({ refreshKey = 0 }) {
     return () => {
       active = false;
     };
-  }, [refreshKey]);
+  }, [reloadKey]);
 
   return (
     <aside className="w-full shrink-0 border-b border-white/10 md:h-[calc(100vh-69px)] md:w-72 md:overflow-y-auto md:border-b-0 md:border-r">
       <div className="px-4 py-4">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink/40">
-          Your documents
-        </h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-ink/40">
+            Your documents
+          </h2>
+          <button
+            type="button"
+            onClick={() => setUploadOpen(true)}
+            className="rounded-md border border-gold/40 px-2 py-1 text-xs font-semibold text-gold transition hover:bg-gold hover:text-navy"
+          >
+            + New
+          </button>
+        </div>
 
         {loading && <p className="text-sm text-ink/50">Loading…</p>}
 
@@ -81,6 +95,12 @@ export default function Sidebar({ refreshKey = 0 }) {
           ))}
         </ul>
       </div>
+
+      <UploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={() => setReloadKey((n) => n + 1)}
+      />
     </aside>
   );
 }
