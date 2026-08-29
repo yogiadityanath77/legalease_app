@@ -5,7 +5,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/authRoutes');
-const authMiddleware = require('./middleware/authMiddleware');
+const documentRoutes = require('./routes/documentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,12 +16,7 @@ app.use(express.json());
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', authRoutes);
-
-// Phase 1 placeholder — real document routes arrive in Phase 2.
-// Kept here so protected-route auth behaviour can be tested now.
-app.get('/api/documents', authMiddleware, (req, res) => {
-  res.json([]);
-});
+app.use('/api/documents', documentRoutes);
 
 // 404 handler
 app.use((req, res) => {

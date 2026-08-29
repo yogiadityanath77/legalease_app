@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import DocumentView from './pages/DocumentView';
 
 // Redirect to /login if there is no token
 function ProtectedRoute({ children }) {
@@ -40,6 +41,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/document/:id"
+        element={
+          <ProtectedRoute>
+            <DocumentView />
           </ProtectedRoute>
         }
       />

@@ -35,27 +35,27 @@ Build in 5 phases, in order. Do not jump ahead. Each phase should be tested befo
 **Goal:** User can upload a PDF or paste text. Raw text is saved to MongoDB.
 
 ### Backend
-- [ ] Create `Document` model (without GPT fields for now)
-- [ ] Install `pdf-parse` and `multer`
-- [ ] Create `pdfParser.js` utility — extract text from PDF buffer
-- [ ] Create `documentController.js` — handle upload
+- [x] Create `Document` model (without GPT fields for now)
+- [x] Install `pdf-parse` and `multer`
+- [x] Create `pdfParser.js` utility — extract text from PDF buffer
+- [x] Create `documentController.js` — handle upload
   - Accept multipart PDF OR plain text body
   - Extract text
   - Save raw document to MongoDB (no GPT yet)
   - Return document ID
-- [ ] Create `documentRoutes.js` — POST `/upload`, GET `/`, GET `/:id`
-- [ ] Test with Postman: upload PDF → check MongoDB for raw text
+- [x] Create `documentRoutes.js` — POST `/upload`, GET `/`, GET `/:id`
+- [x] Test with Postman: upload PDF → check MongoDB for raw text (verified via curl — all REVIEW.md Phase 2 backend cases pass; real PDF extracted correctly)
 
 ### Frontend
-- [ ] Build `UploadModal.jsx`
+- [x] Build `UploadModal.jsx`
   - Tab toggle: Upload PDF / Paste Text
   - PDF: drag-and-drop file input
   - Text: textarea
   - Document name input
   - Submit button
-- [ ] POST to `/api/documents/upload` on submit
-- [ ] On success: navigate to `/document/:id`
-- [ ] Build basic `Dashboard.jsx` with upload button
+- [x] POST to `/api/documents/upload` on submit
+- [x] On success: navigate to `/document/:id` (minimal `DocumentView` placeholder added + route; full tabs UI is Phase 4)
+- [x] Build basic `Dashboard.jsx` with upload button
 
 ---
 

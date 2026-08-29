@@ -20,3 +20,6 @@ npm-debug.log*
 
 # claude local settings (machine-specific)
 .claude/settings.local.json
+
+# test artifacts
+*.pdf

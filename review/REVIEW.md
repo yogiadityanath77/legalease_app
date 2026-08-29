@@ -20,14 +20,14 @@ Use this file in a separate Claude session to review and test the completed buil
 | GET `/api/documents` with invalid token | Returns error 401 "Invalid token" |
 
 ### Frontend Tests
-- [ ] Register page renders without errors
-- [ ] Successful register redirects to `/dashboard`
-- [ ] Login page renders without errors
-- [ ] Successful login redirects to `/dashboard`
-- [ ] Invalid credentials shows error message on screen
-- [ ] Logged-in user cannot access `/login` (redirects to dashboard)
-- [ ] Logged-out user cannot access `/dashboard` (redirects to login)
-- [ ] Logout button clears token and redirects to `/login`
+- [x] Register page renders without errors
+- [x] Successful register redirects to `/dashboard`
+- [x] Login page renders without errors
+- [x] Successful login redirects to `/dashboard`
+- [x] Invalid credentials shows error message on screen
+- [x] Logged-in user cannot access `/login` (redirects to dashboard)
+- [x] Logged-out user cannot access `/dashboard` (redirects to login)
+- [x] Logout button clears token and redirects to `/login`
 
 ---
 
