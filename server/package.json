@@ -4,6 +4,9 @@
   "description": "LegalEase backend — Express REST API",
   "main": "index.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"

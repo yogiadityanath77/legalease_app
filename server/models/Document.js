@@ -39,6 +39,14 @@ const documentSchema = new mongoose.Schema(
       type: [riskSchema],
       default: [], // GPT-4o risk-flagged clauses (set on upload)
     },
+    analysisStatus: {
+      // 'pending'  — text saved, GPT analysis not yet successful
+      // 'complete' — summary + risks populated
+      // 'failed'   — last analysis attempt errored; retriable via POST /:id/analyze
+      type: String,
+      enum: ['pending', 'complete', 'failed'],
+      default: 'pending',
+    },
     isDeleted: {
       type: Boolean,
       default: false,

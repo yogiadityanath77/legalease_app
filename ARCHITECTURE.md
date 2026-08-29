@@ -53,10 +53,11 @@ LegalEase follows a standard MERN architecture with a clear separation between f
 ### Document Routes (`/api/documents`) — all protected by authMiddleware
 | Method | Route | Description |
 |---|---|---|
-| POST | `/upload` | Upload PDF or text, trigger GPT analysis, save to DB |
+| POST | `/upload` | Upload PDF or text, save raw text, then run GPT analysis. The document is saved even if analysis fails (`analysisStatus: 'failed'`). |
 | GET | `/` | Get all documents for logged-in user |
 | GET | `/:id` | Get single document with full analysis |
 | POST | `/:id/ask` | Ask a follow-up question about a specific document |
+| POST | `/:id/analyze` | Re-run GPT analysis for a document whose earlier attempt failed |
 
 ---
 
@@ -86,6 +87,7 @@ LegalEase follows a standard MERN architecture with a clear separation between f
       severity: String    // 'High' | 'Medium' | 'Low'
     }
   ],
+  analysisStatus: String, // 'pending' | 'complete' | 'failed'
   createdAt: Date
 }
 ```
@@ -107,15 +109,18 @@ documentController receives file/text
 documentText.js builds { name, rawText }
   (uses pdfParser.js to extract PDF text; validates input)
         ↓
-gptService.js sends text to GPT-4o
+Save Document to MongoDB (analysisStatus: 'pending')
         ↓
-GPT returns { summary, risks[] }
+gptService.js validates length, then sends text to GPT-4o
         ↓
-Save Document to MongoDB
+GPT returns { summary, risks[] }  ──(on failure)──▶ mark analysisStatus 'failed', keep document
         ↓
-Return document._id to frontend
+Update Document with summary + risks (analysisStatus: 'complete')
+        ↓
+Return document._id + analysisStatus to frontend
         ↓
 Frontend navigates to /document/:id
+  (if analysis failed, offers retry → POST /:id/analyze)
 ```
 
 ### Q&A Flow

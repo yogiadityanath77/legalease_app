@@ -3,9 +3,30 @@ const Document = require('../models/Document');
 const { buildDocumentPayload, UploadError } = require('../utils/documentText');
 const { analyseDocument, askQuestion, GPTError } = require('../utils/gptService');
 
+// Run GPT analysis for a saved document and persist the result onto it.
+// On GPT failure the document is left intact and marked 'failed' so the caller
+// can retry (POST /:id/analyze) without re-uploading; the GPTError is rethrown
+// for the caller to surface.
+const runAnalysis = async (doc) => {
+  try {
+    const { summary, risks } = await analyseDocument(doc.rawText);
+    doc.summary = summary;
+    doc.risks = risks;
+    doc.analysisStatus = 'complete';
+    await doc.save();
+  } catch (err) {
+    if (err instanceof GPTError) {
+      doc.analysisStatus = 'failed';
+      await doc.save().catch(() => {});
+    }
+    throw err;
+  }
+};
+
 // POST /api/documents/upload
 // Accepts EITHER a multipart PDF (field: file) OR pasted text (field: text).
 const uploadDocument = async (req, res, next) => {
+  let doc;
   try {
     const { name, rawText } = await buildDocumentPayload({
       file: req.file,
@@ -13,23 +34,34 @@ const uploadDocument = async (req, res, next) => {
       name: req.body.name,
     });
 
-    // Analyse with GPT-4o before saving — summary + risks are stored with the doc.
-    const { summary, risks } = await analyseDocument(rawText);
-
-    const doc = await Document.create({
+    // Persist the extracted text first so a downstream GPT outage never costs
+    // the user their upload — analysis is a separate, retriable step.
+    doc = await Document.create({
       userId: req.user.id,
       name,
       rawText,
-      summary,
-      risks,
+      analysisStatus: 'pending',
     });
-
-    return res.status(201).json({ documentId: doc._id });
   } catch (err) {
-    if (err instanceof UploadError || err instanceof GPTError) {
+    if (err instanceof UploadError) {
       return res.status(err.status).json({ message: err.message });
     }
-    next(err);
+    return next(err);
+  }
+
+  try {
+    await runAnalysis(doc);
+    return res.status(201).json({ documentId: doc._id, analysisStatus: 'complete' });
+  } catch (err) {
+    if (err instanceof GPTError) {
+      // Document is saved; report the analysis failure without discarding it.
+      return res.status(201).json({
+        documentId: doc._id,
+        analysisStatus: 'failed',
+        message: err.message,
+      });
+    }
+    return next(err);
   }
 };
 
@@ -105,9 +137,29 @@ const askDocument = async (req, res, next) => {
   }
 };
 
+// POST /api/documents/:id/analyze — (re)run GPT analysis for a document whose
+// earlier attempt failed. Returns the updated document.
+const analyzeDocument = async (req, res, next) => {
+  try {
+    const { doc, error } = await loadOwnedDocument(req.params.id, req.user.id);
+    if (error) {
+      return res.status(error.status).json({ message: error.message });
+    }
+
+    await runAnalysis(doc);
+    return res.json(doc);
+  } catch (err) {
+    if (err instanceof GPTError) {
+      return res.status(err.status).json({ message: err.message });
+    }
+    next(err);
+  }
+};
+
 module.exports = {
   uploadDocument,
   getDocuments,
   getDocumentById,
   askDocument,
+  analyzeDocument,
 };

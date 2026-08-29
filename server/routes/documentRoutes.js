@@ -6,6 +6,7 @@ const {
   getDocuments,
   getDocumentById,
   askDocument,
+  analyzeDocument,
 } = require('../controllers/documentController');
 
 const router = express.Router();
@@ -43,5 +44,6 @@ router.post('/upload', uploadSingle, uploadDocument);
 router.get('/', getDocuments);
 router.get('/:id', getDocumentById);
 router.post('/:id/ask', askDocument);
+router.post('/:id/analyze', analyzeDocument);
 
 module.exports = router;

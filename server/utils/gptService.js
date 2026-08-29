@@ -4,28 +4,42 @@ const OpenAI = require('openai');
 const MODEL = 'gpt-4o';
 const TEMPERATURE = 0.2;
 
+// Guard rails before we spend tokens. gpt-4o has a 128k-token context; ~200k
+// characters (~50k tokens) leaves ample room for the prompt + response and
+// keeps the bill sane. Anything larger is rejected up front (see CLAUDE.md:
+// "Always validate inputs on the backend before sending to GPT").
+const MAX_DOCUMENT_CHARS = 200_000;
+const MAX_QUESTION_CHARS = 2_000;
+
+// Thrown when GPT is unreachable or returns something we cannot use.
+// `status` lets the controller distinguish a retryable outage (502) from a
+// caller mistake such as an over-long document (400).
+class GPTError extends Error {
+  constructor(message, status = 502) {
+    super(message);
+    this.name = 'GPTError';
+    this.status = status;
+  }
+}
+
 // Lazily created so importing this module never throws when the key is unset
 // (e.g. in tests) — a missing key surfaces as a GPTError at request time.
+// Explicit timeout/maxRetries so a slow call fails fast instead of holding the
+// HTTP request open for the SDK's 10-minute default.
 let client;
 const getClient = () => {
   if (!client) {
     if (!process.env.OPENAI_API_KEY) {
       throw new GPTError('The AI service is not configured. Please try again later.');
     }
-    client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      timeout: 60_000,
+      maxRetries: 1,
+    });
   }
   return client;
 };
-
-// Thrown when GPT is unreachable or returns something we cannot use.
-// The controller turns this into a user-facing response instead of a 500 crash.
-class GPTError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'GPTError';
-    this.status = 502;
-  }
-}
 
 // --- Prompts (kept verbatim from PROMPTS.md) ---
 
@@ -70,6 +84,20 @@ The user asks: ${question}
 
 Answer in 2-4 sentences. Be clear, direct, and reference the specific part of the document your answer comes from.`;
 
+// --- Input validation ---
+
+const assertLength = (label, value, max) => {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new GPTError(`No ${label} text was provided.`, 400);
+  }
+  if (value.length > max) {
+    throw new GPTError(
+      `The ${label} is too long to analyse (limit ${max.toLocaleString()} characters, got ${value.length.toLocaleString()}). Please shorten it and try again.`,
+      400
+    );
+  }
+};
+
 // --- Response parsing ---
 
 // GPT can occasionally return malformed JSON or wrap it in code fences despite
@@ -84,7 +112,24 @@ const parseGPTResponse = (content) => {
   }
 };
 
-const VALID_SEVERITIES = ['High', 'Medium', 'Low'];
+// Map whatever GPT puts in `severity` onto our three canonical values,
+// case-insensitively and with common synonyms. An unrecognised value is
+// treated as Medium — never silently downgraded to Low (which renders as a
+// "safe" badge and would hide a genuinely high-risk clause).
+const SEVERITY_BY_KEY = {
+  high: 'High',
+  severe: 'High',
+  critical: 'High',
+  medium: 'Medium',
+  moderate: 'Medium',
+  low: 'Low',
+  minor: 'Low',
+};
+
+const normaliseSeverity = (value) => {
+  if (typeof value !== 'string') return 'Medium';
+  return SEVERITY_BY_KEY[value.trim().toLowerCase()] || 'Medium';
+};
 
 // Coerce the parsed GPT payload into the shape the Document model expects.
 const normaliseRisks = (risks) =>
@@ -100,8 +145,45 @@ const normaliseRisks = (risks) =>
     .map((r) => ({
       clause: r.clause.trim(),
       reason: r.reason.trim(),
-      severity: VALID_SEVERITIES.includes(r.severity) ? r.severity : 'Low',
+      severity: normaliseSeverity(r.severity),
     }));
+
+// Turn an OpenAI SDK error into a GPTError with an accurate, actionable message.
+// Retryable outages stay 502 with a "try again" message; caller-side problems
+// (over-long / malformed request) become 400 so the user isn't told to retry
+// something that will always fail; auth/model misconfig is logged loudly.
+const toGPTError = (err) => {
+  const status = err && err.status; // OpenAI APIError carries the HTTP status
+  const code = (err && (err.code || (err.error && err.error.code))) || '';
+
+  if (status === 401 || status === 403) {
+    console.error('GPT auth/config error:', err);
+    return new GPTError(
+      'The AI service is not configured correctly. Please contact support.',
+      502
+    );
+  }
+  if (status === 404) {
+    console.error('GPT model/endpoint unavailable:', err);
+    return new GPTError(
+      'The AI service is misconfigured (model unavailable). Please contact support.',
+      502
+    );
+  }
+  if (code === 'context_length_exceeded' || status === 400 || status === 422) {
+    console.error('GPT rejected the request:', err);
+    return new GPTError(
+      'This document is too long or complex for the AI to analyse. Please try a shorter document.',
+      400
+    );
+  }
+  // 408 / 429 / 5xx / network / timeout — genuinely transient.
+  console.error('GPT request failed (transient):', err);
+  return new GPTError(
+    'The AI service is currently unavailable. Please try again in a moment.',
+    502
+  );
+};
 
 const chat = async (messages) => {
   try {
@@ -113,13 +195,14 @@ const chat = async (messages) => {
     return completion.choices?.[0]?.message?.content || '';
   } catch (err) {
     if (err instanceof GPTError) throw err;
-    console.error('GPT request failed:', err);
-    throw new GPTError('The AI service is currently unavailable. Please try again.');
+    throw toGPTError(err);
   }
 };
 
 // analyseDocument(text) → { summary, risks[] }
 const analyseDocument = async (text) => {
+  assertLength('document', text, MAX_DOCUMENT_CHARS);
+
   const content = await chat([
     { role: 'system', content: ANALYSIS_SYSTEM_PROMPT },
     { role: 'user', content: buildAnalysisUserPrompt(text) },
@@ -138,6 +221,9 @@ const analyseDocument = async (text) => {
 
 // askQuestion(text, question) → answer string (not stored, see DECISIONS.md #4)
 const askQuestion = async (text, question) => {
+  assertLength('document', text, MAX_DOCUMENT_CHARS);
+  assertLength('question', question, MAX_QUESTION_CHARS);
+
   const answer = await chat([
     { role: 'system', content: QA_SYSTEM_PROMPT },
     { role: 'user', content: buildQAUserPrompt(text, question) },
@@ -149,4 +235,13 @@ const askQuestion = async (text, question) => {
   return answer.trim();
 };
 
-module.exports = { analyseDocument, askQuestion, GPTError };
+module.exports = {
+  analyseDocument,
+  askQuestion,
+  GPTError,
+  MAX_DOCUMENT_CHARS,
+  MAX_QUESTION_CHARS,
+  // Exported for unit testing of the response-coercion logic.
+  normaliseSeverity,
+  normaliseRisks,
+};
