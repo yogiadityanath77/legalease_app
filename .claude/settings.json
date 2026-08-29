@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s -m 10 -w '\\\\n%{http_code}\\\\n' -X POST localhost:5000/api/auth/register -H 'Content-Type: application/json' -d '{\"name\":\"Atlas Test\",\"email\":\"atlas__CMDSUB_OUTPUT__@ex.com\",\"password\":\"secret1\"}')",
+      "Bash(curl -s -m 10 -w '\\\\n%{http_code}\\\\n' -X POST localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"atlas__CMDSUB_OUTPUT__@ex.com\",\"password\":\"secret1\"}')",
+      "Bash(git config *)",
+      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git add *)"
+    ]
+  }
+}
