@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import api from '../utils/axios';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
@@ -15,6 +15,9 @@ const TABS = [
 
 export default function DocumentView() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  // ?tab=risks lets the dashboard's risk panel land straight on the right tab.
+  const tabParam = searchParams.get('tab');
 
   const [doc, setDoc] = useState(null);
   const [tab, setTab] = useState('summary');
@@ -28,7 +31,6 @@ export default function DocumentView() {
       setLoading(true);
       setError('');
       setDoc(null);
-      setTab('summary');
       try {
         const { data } = await api.get(`/documents/${id}`);
         if (active) setDoc(data);
@@ -42,6 +44,10 @@ export default function DocumentView() {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    setTab(TABS.some((t) => t.key === tabParam) ? tabParam : 'summary');
+  }, [id, tabParam]);
 
   // The upload endpoint saves the text even when GPT fails, so offer a retry
   // instead of making the user upload the document again.
