@@ -5,6 +5,7 @@ const {
   uploadDocument,
   getDocuments,
   getDocumentById,
+  askDocument,
 } = require('../controllers/documentController');
 
 const router = express.Router();
@@ -41,5 +42,6 @@ router.use(authMiddleware); // all document routes are protected
 router.post('/upload', uploadSingle, uploadDocument);
 router.get('/', getDocuments);
 router.get('/:id', getDocumentById);
+router.post('/:id/ask', askDocument);
 
 module.exports = router;

@@ -63,18 +63,18 @@ Build in 5 phases, in order. Do not jump ahead. Each phase should be tested befo
 **Goal:** Uploaded document gets analysed by GPT-4o. Summary + risks saved to MongoDB.
 
 ### Backend
-- [ ] Create `gptService.js`
+- [x] Create `gptService.js`
   - `analyseDocument(text)` — returns `{ summary, risks[] }`
   - Use exact prompt from `PROMPTS.md`
-  - Parse GPT JSON response safely
-- [ ] Update `documentController.js` upload handler
+  - Parse GPT JSON response safely (also added `askQuestion(text, question)`)
+- [x] Update `documentController.js` upload handler
   - After extracting text, call `gptService.analyseDocument()`
   - Save summary + risks to Document model
-- [ ] Create `/:id/ask` route + controller
+- [x] Create `/:id/ask` route + controller
   - Fetch document rawText from DB
   - Call GPT with document + user question
   - Return answer (do not store)
-- [ ] Test: upload doc → check MongoDB for summary + risks
+- [x] Test: upload doc → check MongoDB for summary + risks (verified via direct gptService run against gpt-4o — REVIEW.md Phase 3 sample: 4 risks, 3 High, valid severities; Q&A answers and "not in document" case both pass)
 
 ---
 
