@@ -38,6 +38,8 @@ export default function UploadModal({ open, onClose }) {
   };
 
   const pickFile = (f) => {
+    // Clear the native input so re-picking the same filename fires onChange again.
+    if (fileInputRef.current) fileInputRef.current.value = '';
     if (!f) return;
     if (!f.name.toLowerCase().endsWith('.pdf')) {
       setError('Only PDF files are supported');

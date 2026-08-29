@@ -18,8 +18,9 @@ npm-debug.log*
 .DS_Store
 .vscode/
 
-# claude local settings (machine-specific)
+# claude settings (machine-specific; harness appends session-scoped rules)
+.claude/settings.json
 .claude/settings.local.json
 
-# test artifacts
-*.pdf
+# throwaway local test PDFs (keep real fixtures trackable)
+/_*.pdf

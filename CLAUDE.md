@@ -54,6 +54,7 @@ legalease/
 │   │   └── authMiddleware.js
 │   ├── utils/
 │   │   ├── pdfParser.js
+│   │   ├── documentText.js   # builds { name, rawText } from a PDF/text upload
 │   │   └── gptService.js
 │   └── index.js
 │

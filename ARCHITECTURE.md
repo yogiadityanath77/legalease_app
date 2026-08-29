@@ -104,7 +104,8 @@ authMiddleware validates JWT
         ↓
 documentController receives file/text
         ↓
-pdfParser.js extracts raw text (if PDF)
+documentText.js builds { name, rawText }
+  (uses pdfParser.js to extract PDF text; validates input)
         ↓
 gptService.js sends text to GPT-4o
         ↓

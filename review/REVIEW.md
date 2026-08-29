@@ -45,14 +45,14 @@ Use this file in a separate Claude session to review and test the completed buil
 | GET `/api/documents/:id` of another user's document | Returns error 403 "Not authorised" |
 
 ### Frontend Tests
-- [ ] Upload modal opens on button click
-- [ ] Can switch between PDF upload and paste text tabs
-- [ ] PDF drag-and-drop works
-- [ ] File name displays after selection
-- [ ] Submit button disabled if no file/text provided
-- [ ] Loading state shown during upload
-- [ ] Redirects to `/document/:id` on success
-- [ ] Error message shown if upload fails
+- [x] Upload modal opens on button click
+- [x] Can switch between PDF upload and paste text tabs
+- [x] PDF drag-and-drop works
+- [x] File name displays after selection
+- [x] Submit button disabled if no file/text provided
+- [x] Loading state shown during upload
+- [x] Redirects to `/document/:id` on success
+- [x] Error message shown if upload fails
 
 ---
 
